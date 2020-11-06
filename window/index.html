@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .audio {
+            padding: 8px;
+            width: 100px;
+            height: 100px;
+            box-sizing: border-box;
+            margin: 8px;
+        }
+
+        #audios {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <select id="audiooutputs">
+    </select>
+
+    <div id="audios"></div>
+
+    <script>
+        const fs = require("fs");
+        const path = require("path");
+
+        const select = document.getElementById("audiooutputs");
+        const audio = document.createElement("audio");
+        const audio2 = document.createElement("audio");
+        const audiosDiv = document.getElementById("audios");
+
+        main();
+
+        async function main() {
+            await loadAudioOutputs();
+
+            const audios = await getAllAudio();
+
+            audios.forEach(audio => {
+                const button = document.createElement("button");
+                button.onclick = () => playAudio(audio);
+                button.innerText = audio;
+                button.className = "audio";
+                audiosDiv.appendChild(button);
+            });
+        }
+
+        async function loadAudioOutputs() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioDevices = devices.filter(device => device.kind === 'audiooutput');
+
+            for (const audioDevice of audioDevices) {
+                const el = document.createElement("option");
+                el.value = audioDevice.deviceId;
+                el.innerText = audioDevice.label;
+                select.add(el);
+            };
+        }
+
+        function getCurrentDeviceId() {
+            return select.value;
+        }
+
+        function playAudio(audioFile) {
+            return new Promise(async (resolve, reject) => {
+                audio.pause();
+                audio2.pause();
+
+                await audio.setSinkId(getCurrentDeviceId());
+
+                audio.oncanplaythrough = () => {
+                    audio.play();
+                }
+                audio2.oncanplaythrough = () => {
+                    audio2.play();
+                }
+
+                audio.src = `audios/${audioFile}`;
+                audio.load();
+
+                audio2.src = `audios/${audioFile}`;
+                audio2.load();
+            });
+        }
+
+        function getAllAudio() {
+            return fs.readdirSync("window/audios");
+        }
+    </script>
+</body>
+
+</html>
